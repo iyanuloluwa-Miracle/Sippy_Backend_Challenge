@@ -1,21 +1,22 @@
 const Task = require('../models/Task');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 const cloudinaryService = require('./cloudinaryService');
 
 class TaskService {
     async createTask(taskData, userId, file) {
-        let imageUrl;
-        if (file) {
-            const result = await cloudinaryService.uploadImage(file);
-            imageUrl = result.secure_url;
-        }
-
-        const task = await Task.create({
+        const task = new Task({
             ...taskData,
-            creator: userId,
-            imageUrl
+            creator: userId
         });
 
+        if (file) {
+            task.imageUrl = await cloudinaryService.uploadImage(file);
+        }
+
+        await task.save();
+
+        // Update user's task count
         await User.findByIdAndUpdate(userId, {
             $inc: { totalTasks: 1 }
         });
@@ -23,71 +24,57 @@ class TaskService {
         return task;
     }
 
-    async getTasks(queryParams, user) {
-        const { 
-            status, 
-            priority, 
-            startDate, 
-            endDate, 
+    async getTasks(query, user) {
+        const {
+            status,
+            priority,
+            startDate,
+            endDate,
             search,
-            sortBy,
-            sortOrder = 'asc',
+            sortBy = 'createdAt',
+            sortOrder = 'desc',
             page = 1,
-            limit = 10,
-            assignedTo,
-            createdBy
-        } = queryParams;
+            limit = 10
+        } = query;
 
-        const query = {};
-        const sort = {};
+        const filter = {};
 
-        // Basic filters
-        if (status) query.status = status;
-        if (priority) query.priority = priority;
-        if (assignedTo) query.assignedTo = assignedTo;
-        if (createdBy) query.creator = createdBy;
-
-        // Date range filter
-        if (startDate || endDate) {
-            query.dueDate = {};
-            if (startDate) query.dueDate.$gte = new Date(startDate);
-            if (endDate) query.dueDate.$lte = new Date(endDate);
-        }
-
-        // Search in title and description
-        if (search) {
-            query.$or = [
-                { title: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } }
-            ];
-        }
-
-        // User-specific filtering
+        // Regular users can only see their tasks or tasks assigned to them
         if (user.role !== 'admin') {
-            query.$or = [
+            filter.$or = [
                 { creator: user._id },
                 { assignedTo: user._id }
             ];
         }
 
-        // Sorting
-        if (sortBy) {
-            sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
-        } else {
-            sort.createdAt = -1; // Default sort by creation date
+        if (status) filter.status = status;
+        if (priority) filter.priority = priority;
+        if (startDate || endDate) {
+            filter.dueDate = {};
+            if (startDate) filter.dueDate.$gte = new Date(startDate);
+            if (endDate) filter.dueDate.$lte = new Date(endDate);
+        }
+        if (search) {
+            filter.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
         }
 
-        // Pagination
+        const sort = {};
+        sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
         const skip = (page - 1) * limit;
 
-        const tasks = await Task.find(query)
-            .sort(sort)
-            .skip(skip)
-            .limit(parseInt(limit))
-            .populate('creator', 'name')
-            .populate('assignedTo', 'name');
-
-        const total = await Task.countDocuments(query);
+        const [tasks, total] = await Promise.all([
+            Task.find(filter)
+                .sort(sort)
+                .skip(skip)
+                .limit(parseInt(limit))
+                .populate('creator', 'name')
+                .populate('assignedTo', 'name'),
+            Task.countDocuments(filter)
+        ]);
 
         return {
             tasks,
@@ -101,77 +88,147 @@ class TaskService {
 
     async updateTask(taskId, updateData, userId, userRole, file) {
         const task = await Task.findById(taskId);
-        
-        if (!task) {
-            throw new Error('Task not found');
+        if (!task) throw new Error('Task not found');
+
+        // Check authorization
+        if (userRole !== 'admin' && task.creator.toString() !== userId) {
+            throw new Error('Not authorized to update this task');
         }
 
-        if (userRole !== 'admin' && task.creator.toString() !== userId.toString()) {
-            throw new Error('Not authorized');
-        }
-
-        let imageUrl = task.imageUrl;
+        // Handle image update
         if (file) {
             if (task.imageUrl) {
                 await cloudinaryService.deleteImage(task.imageUrl);
             }
-            const result = await cloudinaryService.uploadImage(file);
-            imageUrl = result.secure_url;
+            updateData.imageUrl = await cloudinaryService.uploadImage(file);
         }
 
-        // Handle completion status change
+        // Update task status count if status is changing to completed
         if (updateData.status === 'Completed' && task.status !== 'Completed') {
             await User.findByIdAndUpdate(task.creator, {
                 $inc: { completedTasks: 1 }
             });
-        } else if (updateData.status !== 'Completed' && task.status === 'Completed') {
-            await User.findByIdAndUpdate(task.creator, {
-                $inc: { completedTasks: -1 }
-            });
         }
 
-        const updatedTask = await Task.findByIdAndUpdate(
-            taskId,
-            { ...updateData, imageUrl },
-            { new: true }
-        ).populate('creator assignedTo', 'name');
+        Object.assign(task, updateData);
+        await task.save();
 
-        return updatedTask;
+        return task;
     }
 
     async deleteTask(taskId, userId, userRole) {
         const task = await Task.findById(taskId);
-        
-        if (!task) {
-            throw new Error('Task not found');
+        if (!task) throw new Error('Task not found');
+
+        // Check authorization
+        if (userRole !== 'admin' && task.creator.toString() !== userId) {
+            throw new Error('Not authorized to delete this task');
         }
 
-        if (userRole !== 'admin' && task.creator.toString() !== userId.toString()) {
-            throw new Error('Not authorized');
-        }
-
+        // Delete task image if exists
         if (task.imageUrl) {
             await cloudinaryService.deleteImage(task.imageUrl);
         }
 
         await task.remove();
 
-        await User.findByIdAndUpdate(task.creator, {
-            $inc: { 
-                totalTasks: -1,
-                completedTasks: task.status === 'Completed' ? -1 : 0
-            }
-        });
+        // Update user's task counts
+        const updateData = { $inc: { totalTasks: -1 } };
+        if (task.status === 'Completed') {
+            updateData.$inc.completedTasks = -1;
+        }
+        await User.findByIdAndUpdate(task.creator, updateData);
 
         return { message: 'Task removed successfully' };
     }
 
     async getLeaderboard() {
-        const users = await User.find({})
-            .select('name completedTasks totalTasks')
-            .sort({ completedTasks: -1, totalTasks: 1 });
+        return await User.aggregate([
+            {
+                $project: {
+                    name: 1,
+                    completedTasks: 1,
+                    totalTasks: 1,
+                    completionRate: {
+                        $cond: [
+                            { $eq: ['$totalTasks', 0] },
+                            0,
+                            { $divide: ['$completedTasks', '$totalTasks'] }
+                        ]
+                    }
+                }
+            },
+            { $sort: { completionRate: -1, completedTasks: -1 } }
+        ]);
+    }
 
-        return users;
+    async getAssignedTasks(userId, query) {
+        const {
+            status,
+            priority,
+            page = 1,
+            limit = 10
+        } = query;
+
+        const filter = { assignedTo: userId };
+        if (status) filter.status = status;
+        if (priority) filter.priority = priority;
+
+        const skip = (page - 1) * limit;
+
+        const [tasks, total] = await Promise.all([
+            Task.find(filter)
+                .sort({ dueDate: 1 })
+                .skip(skip)
+                .limit(parseInt(limit))
+                .populate('creator', 'name'),
+            Task.countDocuments(filter)
+        ]);
+
+        return {
+            tasks,
+            pagination: {
+                total,
+                page: parseInt(page),
+                pages: Math.ceil(total / limit)
+            }
+        };
+    }
+
+    async createTaskNotification(taskId, userId, type) {
+        const notification = new Notification({
+            taskId,
+            userId,
+            type
+        });
+        await notification.save();
+        return notification;
+    }
+
+    async getTaskNotifications(userId) {
+        return await Notification.find({ userId })
+            .sort({ createdAt: -1 })
+            .populate({
+                path: 'taskId',
+                select: 'title'
+            });
+    }
+
+    async getUserStats(userId) {
+        const user = await User.findById(userId);
+        const assignedTasks = await Task.countDocuments({ assignedTo: userId });
+        const completedAssigned = await Task.countDocuments({
+            assignedTo: userId,
+            status: 'Completed'
+        });
+
+        return {
+            totalCreated: user.totalTasks,
+            completedCreated: user.completedTasks,
+            totalAssigned: assignedTasks,
+            completedAssigned,
+            completionRate: user.totalTasks > 0 ? (user.completedTasks / user.totalTasks) * 100 : 0
+        };
     }
 }
 

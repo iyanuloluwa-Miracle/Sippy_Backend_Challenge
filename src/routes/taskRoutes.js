@@ -7,7 +7,10 @@ const {
     getTasks,
     updateTask,
     deleteTask,
-    getLeaderboard
+    getLeaderboard,
+    getAssignedTasks,
+    getTaskNotifications,
+    getUserStats
 } = require('../controllers/taskController');
 
 router.use(protect); // Protect all routes
@@ -21,5 +24,8 @@ router.route('/:id')
     .delete(deleteTask);
 
 router.get('/leaderboard', getLeaderboard);
+router.get('/assigned', getAssignedTasks);
+router.get('/notifications', getTaskNotifications);
+router.get('/stats', getUserStats);
 
 module.exports = router;
