@@ -1,242 +1,348 @@
 # Task Management System
 
-A robust and scalable task management API built with Node.js, Express, and MongoDB, featuring Cloudinary integration for image management.
+A user-friendly task management system that helps teams organize and track their work efficiently.
 
-## Features
+## 📚 Table of Contents
+- [For Users (Non-Technical)](#for-users-non-technical)
+- [For Developers (Technical)](#for-developers-technical)
+- [API Examples](#api-examples)
+- [Technical Details](#technical-details)
 
-- JWT-based Authentication
-- Role-based Access Control (Admin & Regular Users)
-- CRUD Operations for Tasks
-- Cloudinary Image Upload Integration
-- Task Assignment System
-- Advanced Filtering & Sorting
-- Pagination Support
-- Leaderboard System
-- Comprehensive Test Suite
+## For Users (Non-Technical)
 
-## Tech Stack
+### What is This?
+This is a task management system that helps you:
+- Create and manage tasks
+- Assign tasks to team members
+- Track task progress
+- Upload images to tasks
+- See who's completing the most tasks
 
-- Node.js
-- Express.js
-- MongoDB
-- JWT for Authentication
-- Cloudinary for Image Management
-- Jest for Testing
+### Key Features
+- ✅ Create tasks with titles, descriptions, and due dates
+- 👥 Assign tasks to team members
+- 🏷️ Set task priorities (Low, Medium, High)
+- 📊 Track task status (To Do, In Progress, Completed)
+- 🖼️ Add images to tasks
+- 🏆 View team leaderboard
+- 🔍 Search and filter tasks easily
 
-## Project Structure
+### User Roles
+1. **Regular Users Can:**
+   - Create their own tasks
+   - View and update their tasks
+   - See tasks assigned to them
+   - Upload images to tasks
+   - View the leaderboard
 
-```
-src/
-├── config/        # Configuration files
-├── controllers/   # Route handlers
-├── middleware/    # Custom middleware
-├── models/        # Database models
-├── services/      # Business logic
-└── routes/        # API routes
-```
+2. **Administrators Can:**
+   - Do everything regular users can
+   - View and manage all tasks
+   - Access system-wide reports
 
-## API Endpoints
+### Getting Started
+1. Register for an account
+2. Log in to the system
+3. Start creating and managing tasks
+4. Use the search and filter options to find tasks
+5. Check the leaderboard to see top performers
 
-### Authentication
-- POST /api/auth/register - Register a new user
-- POST /api/auth/login - Login user
+## For Developers (Technical)
 
-### Tasks
-- GET /api/tasks - Get all tasks (with filtering & sorting)
-- POST /api/tasks - Create a new task
-- PUT /api/tasks/:id - Update a task
-- DELETE /api/tasks/:id - Delete a task
-- GET /api/tasks/leaderboard - Get user leaderboard
-
-## Setup Instructions
-
+### Quick Start
 1. Clone the repository
 2. Install dependencies:
    ```bash
    npm install
    ```
-3. Create a .env file based on .env.example and fill in your details:
-   ```
-   PORT=5000
-   MONGODB_URI=mongodb://localhost:27017/task-management
-   JWT_SECRET=your_jwt_secret_key_here
-   NODE_ENV=development
-   CLOUDINARY_CLOUD_NAME=your_cloud_name
-   CLOUDINARY_API_KEY=your_api_key
-   CLOUDINARY_API_SECRET=your_api_secret
-   ```
+3. Set up environment variables (see Configuration section)
 4. Start the server:
    ```bash
    npm start
    ```
 
-## Running Tests
-
-```bash
-npm test
+### Configuration
+Create a .env file with these variables:
+```env
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/task-management
+JWT_SECRET=your_jwt_secret_key_here
+NODE_ENV=development
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
-## Technical Evaluation
+## API Examples
 
-### Code Quality and Structure
+### Authentication
 
-#### Architecture
-- **Service Layer Pattern**
-  - Separation of concerns with dedicated services for auth, tasks, and file uploads
-  - Business logic isolated from controllers
-  - Improved maintainability and testability
+#### Register a New User
+```http
+POST /api/auth/register
+Content-Type: application/json
 
-#### Best Practices
-- ES6+ features
-- Async/await for promise handling
-- Error handling middleware
-- Input validation
-- Environment configuration
-- Consistent code style
+Request:
+{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "securePassword123",
+    "role": "user"  // or "admin"
+}
 
-### API Design and Efficiency
+Response (201 Created):
+{
+    "_id": "user_id",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "user",
+    "token": "jwt_token"
+}
+```
 
-#### RESTful Endpoints Documentation
+#### Login
+```http
+POST /api/auth/login
+Content-Type: application/json
 
-##### Create Task
+Request:
+{
+    "email": "john@example.com",
+    "password": "securePassword123"
+}
+
+Response (200 OK):
+{
+    "_id": "user_id",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "token": "jwt_token"
+}
+```
+
+### Task Management
+
+#### Create a Task
 ```http
 POST /api/tasks
 Authorization: Bearer <token>
 Content-Type: multipart/form-data
 
+Request:
 {
-  "title": "Task Title",
-  "description": "Task Description",
-  "priority": "High",
-  "dueDate": "2023-12-31",
-  "image": <file>
+    "title": "Complete Project Proposal",
+    "description": "Write and review Q2 project proposal",
+    "priority": "High",
+    "status": "To Do",
+    "dueDate": "2024-04-15",
+    "assignedTo": "user_id",
+    "image": <file>  // Optional
+}
+
+Response (201 Created):
+{
+    "_id": "task_id",
+    "title": "Complete Project Proposal",
+    "description": "Write and review Q2 project proposal",
+    "priority": "High",
+    "status": "To Do",
+    "dueDate": "2024-04-15",
+    "creator": "creator_id",
+    "assignedTo": "user_id",
+    "imageUrl": "https://cloudinary.com/..."
 }
 ```
 
-##### Get Tasks (with filtering & sorting)
+#### Get Tasks with Filters
 ```http
-GET /api/tasks
+GET /api/tasks?status=In Progress&priority=High&search=project&sortBy=dueDate&sortOrder=asc&page=1&limit=10
 Authorization: Bearer <token>
 
-Query Parameters:
-- status: Task status (To Do, In Progress, Completed)
-- priority: Task priority (Low, Medium, High)
-- startDate: Filter tasks from this date
-- endDate: Filter tasks until this date
-- search: Search in title and description
-- sortBy: Field to sort by (createdAt, dueDate, priority)
-- sortOrder: Sort order (asc, desc)
-- page: Page number for pagination
-- limit: Number of items per page
-- assignedTo: Filter by assigned user ID
-- createdBy: Filter by creator user ID
+Response (200 OK):
+{
+    "tasks": [
+        {
+            "_id": "task_id",
+            "title": "Complete Project Proposal",
+            "description": "Write and review Q2 project proposal",
+            "priority": "High",
+            "status": "In Progress",
+            "dueDate": "2024-04-15",
+            "creator": {
+                "_id": "user_id",
+                "name": "John Doe"
+            },
+            "assignedTo": {
+                "_id": "user_id",
+                "name": "Jane Smith"
+            }
+        }
+    ],
+    "pagination": {
+        "total": 45,
+        "page": 1,
+        "pages": 5
+    }
+}
 ```
 
-### Security Implementation
+#### Update a Task
+```http
+PUT /api/tasks/:taskId
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
 
-#### Authentication & Authorization
-- JWT-based authentication
-- Secure password hashing with bcrypt
-- Token expiration
-- Protected routes middleware
-- Role-based access control (Admin/User)
-- Resource ownership validation
+Request:
+{
+    "status": "Completed",
+    "priority": "Medium",
+    "image": <file>  // Optional
+}
 
-#### Data Security
-- Input sanitization
-- Request validation
-- Secure file upload handling
-- Environment variable protection
+Response (200 OK):
+{
+    "_id": "task_id",
+    "title": "Complete Project Proposal",
+    "status": "Completed",
+    "priority": "Medium",
+    "imageUrl": "https://cloudinary.com/..."
+    // ... other fields
+}
+```
 
-### Database Design
+#### Delete a Task
+```http
+DELETE /api/tasks/:taskId
+Authorization: Bearer <token>
 
-#### Schema Design
+Response (200 OK):
+{
+    "message": "Task removed successfully"
+}
+```
+
+#### Get Leaderboard
+```http
+GET /api/tasks/leaderboard
+Authorization: Bearer <token>
+
+Response (200 OK):
+[
+    {
+        "_id": "user_id",
+        "name": "Jane Smith",
+        "completedTasks": 25,
+        "totalTasks": 30
+    },
+    {
+        "_id": "user_id",
+        "name": "John Doe",
+        "completedTasks": 20,
+        "totalTasks": 28
+    }
+]
+```
+
+### Common Error Responses
+
+#### Authentication Errors
+```http
+Status: 401 Unauthorized
+{
+    "message": "Not authorized to access this route"
+}
+```
+
+#### Validation Errors
+```http
+Status: 400 Bad Request
+{
+    "message": "Please provide all required fields"
+}
+```
+
+#### Resource Not Found
+```http
+Status: 404 Not Found
+{
+    "message": "Task not found"
+}
+```
+
+#### Permission Errors
+```http
+Status: 403 Forbidden
+{
+    "message": "User role is not authorized to access this route"
+}
+```
+
+## Technical Details
+
+### Architecture Overview
+```
+Client Request → JWT Auth → Route Handler → Service Layer → Database
+                                        ↳ Cloudinary (for images)
+```
+
+### Database Schemas
+
+#### User Schema
 ```javascript
-// User Schema
 {
-  name: String,
-  email: String,
-  password: String,
-  role: String,
-  completedTasks: Number,
-  totalTasks: Number
-}
-
-// Task Schema
-{
-  title: String,
-  description: String,
-  status: String,
-  priority: String,
-  dueDate: Date,
-  creator: ObjectId,
-  assignedTo: ObjectId,
-  imageUrl: String
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    completedTasks: { type: Number, default: 0 },
+    totalTasks: { type: Number, default: 0 }
 }
 ```
 
-#### Optimization
-- Compound indexes for filtering
-- Text indexes for search
-- Efficient pagination
-- Proper population of references
-
-### Image Upload System
-
-#### Cloudinary Integration
-- Secure file upload
-- Image optimization
-- CDN delivery
-- Automatic format optimization
-- File type validation
-- Size limits
-- Automatic cleanup
-
-### Testing Coverage
-
-#### Test Categories
-1. Unit Tests
-   - Services
-   - Models
-   - Utilities
-
-2. Integration Tests
-   - API endpoints
-   - Authentication
-   - Database operations
-   - Error scenarios
-   - Edge cases
-
-### Performance Metrics
-
-#### API Response Times
-- Authentication: < 200ms
-- Task Creation: < 500ms
-- Task Listing: < 300ms
-- Image Upload: < 1s
-
-#### Database Operations
-- Indexed queries: < 100ms
-- Aggregations: < 200ms
-- Write operations: < 300ms
-
-### Postman Collection
-
-[Click here to access the Postman Collection](https://www.postman.com/task-management-api)
-
-#### Environment Setup
-```json
+#### Task Schema
+```javascript
 {
-  "BASE_URL": "http://localhost:5000",
-  "AUTH_TOKEN": "",
-  "USER_ID": ""
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    status: { 
+        type: String, 
+        enum: ['To Do', 'In Progress', 'Completed'],
+        default: 'To Do'
+    },
+    priority: {
+        type: String,
+        enum: ['Low', 'Medium', 'High'],
+        default: 'Medium'
+    },
+    dueDate: { type: Date, required: true },
+    creator: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    imageUrl: { type: String }
 }
 ```
 
-### Success Criteria
- All test cases passing
- Code coverage > 80%
- API response times within limits
- Proper error handling
- Secure authentication
- Efficient database queries
+### Performance Optimizations
+- Database indexing on frequently queried fields
+- Pagination for large datasets
+- Image optimization via Cloudinary
+- Efficient query filtering
+
+### Security Measures
+- JWT authentication
+- Password hashing
+- Input validation
+- File upload restrictions
+- Role-based access control
+
+### Testing
+Run tests with:
+```bash
+npm test
+```
+
+Coverage includes:
+- Authentication flows
+- CRUD operations
+- Error handling
+- File uploads
+- Access control
