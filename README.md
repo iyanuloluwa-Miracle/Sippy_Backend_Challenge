@@ -1,15 +1,16 @@
 # Task Management System
 
-A robust and scalable task management API built with Node.js, Express, and MongoDB.
+A robust and scalable task management API built with Node.js, Express, and MongoDB, featuring Cloudinary integration for image management.
 
 ## Features
 
 - JWT-based Authentication
 - Role-based Access Control (Admin & Regular Users)
 - CRUD Operations for Tasks
-- Image Upload Support
+- Cloudinary Image Upload Integration
 - Task Assignment System
-- Filtering & Sorting Capabilities
+- Advanced Filtering & Sorting
+- Pagination Support
 - Leaderboard System
 - Comprehensive Test Suite
 
@@ -19,7 +20,7 @@ A robust and scalable task management API built with Node.js, Express, and Mongo
 - Express.js
 - MongoDB
 - JWT for Authentication
-- Multer for File Upload
+- Cloudinary for Image Management
 - Jest for Testing
 
 ## Project Structure
@@ -37,6 +38,10 @@ src/
 ├── models/
 │   ├── User.js
 │   └── Task.js
+├── services/
+│   ├── authService.js
+│   ├── taskService.js
+│   └── cloudinaryService.js
 ├── routes/
 │   ├── authRoutes.js
 │   └── taskRoutes.js
@@ -63,18 +68,17 @@ src/
    ```bash
    npm install
    ```
-3. Create a .env file with the following variables:
+3. Create a .env file based on .env.example and fill in your details:
    ```
    PORT=5000
    MONGODB_URI=mongodb://localhost:27017/task-management
    JWT_SECRET=your_jwt_secret_key_here
    NODE_ENV=development
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
    ```
-4. Create an 'uploads' directory in the root folder:
-   ```bash
-   mkdir uploads
-   ```
-5. Start the server:
+4. Start the server:
    ```bash
    npm start
    ```
@@ -130,10 +134,23 @@ Content-Type: multipart/form-data
 }
 ```
 
-#### Get Tasks
+#### Get Tasks (with filtering & sorting)
 ```http
-GET /api/tasks?status=In Progress&priority=High&sortBy=dueDate:desc
+GET /api/tasks
 Authorization: Bearer <token>
+
+Query Parameters:
+- status: Task status (To Do, In Progress, Completed)
+- priority: Task priority (Low, Medium, High)
+- startDate: Filter tasks from this date
+- endDate: Filter tasks until this date
+- search: Search in title and description
+- sortBy: Field to sort by (createdAt, dueDate, priority)
+- sortOrder: Sort order (asc, desc)
+- page: Page number for pagination
+- limit: Number of items per page
+- assignedTo: Filter by assigned user ID
+- createdBy: Filter by creator user ID
 ```
 
 #### Update Task
@@ -151,28 +168,26 @@ Content-Type: multipart/form-data
 
 ## Design Decisions
 
-1. **Authentication & Authorization**
-   - JWT-based authentication for stateless and scalable auth
-   - Role-based access control for different user privileges
+1. **Service Layer Architecture**
+   - Separation of concerns with dedicated service layer
+   - Business logic isolated from controllers
+   - Improved code reusability and maintainability
 
-2. **Database Schema**
-   - Efficient schema design with proper indexing
-   - Separate models for Users and Tasks with references
+2. **Cloudinary Integration**
+   - Secure and efficient image management
+   - Automatic image optimization
+   - CDN delivery for better performance
 
-3. **File Upload**
-   - Multer middleware for handling multipart/form-data
-   - Local storage for uploaded files (can be extended to cloud storage)
+3. **Advanced Filtering & Sorting**
+   - Comprehensive query parameters
+   - Flexible search capabilities
+   - Efficient pagination implementation
 
-4. **Performance Optimization**
-   - Indexed fields for faster queries
-   - Efficient filtering and sorting implementation
-   - Pagination support for large datasets
-
-5. **Security**
-   - Password hashing using bcrypt
-   - JWT for secure authentication
+4. **Security**
+   - JWT-based authentication
+   - Role-based access control
+   - Secure file upload handling
    - Input validation and sanitization
-   - Protected routes and role-based access
 
 ## Error Handling
 
@@ -182,6 +197,7 @@ The API implements comprehensive error handling:
 - Authorization errors
 - Database errors
 - File upload errors
+- Cloudinary integration errors
 
 ## Future Improvements
 
@@ -191,3 +207,6 @@ The API implements comprehensive error handling:
 4. Add webhook support for notifications
 5. Implement soft delete for tasks
 6. Add support for task categories/tags
+7. Implement real-time notifications using WebSockets
+8. Add file type validation and virus scanning
+9. Implement task comments and activity log
