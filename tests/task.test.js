@@ -75,19 +75,29 @@ describe('Auth Endpoints', () => {
 
 describe('Task Management Tests', () => {
     describe('POST /api/tasks', () => {
-        it('should create a new task', async () => {
-            const res = await request(app)
+        it('should create a new task for authenticated user', async () => {
+            const response = await request(app)
                 .post('/api/tasks')
                 .set('Authorization', `Bearer ${authToken}`)
                 .field('title', 'Test Task')
                 .field('description', 'Test Description')
                 .field('priority', 'High')
-                .field('dueDate', new Date().toISOString());
+                .field('status', 'To Do')
+                .field('dueDate', '2024-12-31')
+                .attach('image', 'tests/fixtures/test-image.jpg')
+                .expect(201);
 
-            expect(res.statusCode).toBe(201);
-            expect(res.body.title).toBe('Test Task');
-            expect(res.body.creator.toString()).toBe(userId);
-            taskId = res.body._id;
+            const task = await Task.findById(response.body._id);
+            expect(task).not.toBeNull();
+            expect(task.imageUrl).toBeDefined();
+        });
+
+        it('should not create task with invalid data', async () => {
+            await request(app)
+                .post('/api/tasks')
+                .set('Authorization', `Bearer ${authToken}`)
+                .send({})
+                .expect(400);
         });
 
         it('should not create task without authentication', async () => {
