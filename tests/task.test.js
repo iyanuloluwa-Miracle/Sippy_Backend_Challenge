@@ -6,6 +6,9 @@ const User = require('../src/models/User');
 const Task = require('../src/models/Task');
 
 let mongoServer;
+let authToken;
+let userId;
+let taskId;
 
 beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
@@ -20,6 +23,18 @@ afterAll(async () => {
 beforeEach(async () => {
     await User.deleteMany({});
     await Task.deleteMany({});
+
+    // Create a test user and get token
+    const userResponse = await request(app)
+        .post('/api/auth/register')
+        .send({
+            name: 'Test User',
+            email: 'test@test.com',
+            password: 'password123'
+        });
+    
+    authToken = userResponse.body.token;
+    userId = userResponse.body._id;
 });
 
 describe('Auth Endpoints', () => {
@@ -58,56 +73,250 @@ describe('Auth Endpoints', () => {
     });
 });
 
-describe('Task Endpoints', () => {
-    let token;
-    let userId;
+describe('Task Management Tests', () => {
+    describe('POST /api/tasks', () => {
+        it('should create a new task', async () => {
+            const res = await request(app)
+                .post('/api/tasks')
+                .set('Authorization', `Bearer ${authToken}`)
+                .field('title', 'Test Task')
+                .field('description', 'Test Description')
+                .field('priority', 'High')
+                .field('dueDate', new Date().toISOString());
 
-    beforeEach(async () => {
-        const res = await request(app)
-            .post('/api/auth/register')
-            .send({
-                name: 'Test User',
-                email: 'test@test.com',
-                password: 'password123'
-            });
+            expect(res.statusCode).toBe(201);
+            expect(res.body.title).toBe('Test Task');
+            expect(res.body.creator.toString()).toBe(userId);
+            taskId = res.body._id;
+        });
 
-        token = res.body.token;
-        userId = res.body._id;
+        it('should not create task without authentication', async () => {
+            const res = await request(app)
+                .post('/api/tasks')
+                .send({
+                    title: 'Test Task',
+                    description: 'Test Description',
+                    priority: 'High',
+                    dueDate: new Date()
+                });
+
+            expect(res.statusCode).toBe(401);
+        });
+
+        it('should validate required fields', async () => {
+            const res = await request(app)
+                .post('/api/tasks')
+                .set('Authorization', `Bearer ${authToken}`)
+                .send({
+                    description: 'Test Description'
+                });
+
+            expect(res.statusCode).toBe(400);
+        });
     });
 
-    it('should create a new task', async () => {
-        const res = await request(app)
-            .post('/api/tasks')
-            .set('Authorization', `Bearer ${token}`)
-            .send({
+    describe('GET /api/tasks', () => {
+        beforeEach(async () => {
+            // Create test tasks
+            await Task.create([
+                {
+                    title: 'Task 1',
+                    description: 'Description 1',
+                    priority: 'High',
+                    status: 'To Do',
+                    dueDate: new Date(),
+                    creator: userId
+                },
+                {
+                    title: 'Task 2',
+                    description: 'Description 2',
+                    priority: 'Low',
+                    status: 'Completed',
+                    dueDate: new Date(),
+                    creator: userId
+                }
+            ]);
+        });
+
+        it('should get all tasks for user', async () => {
+            const res = await request(app)
+                .get('/api/tasks')
+                .set('Authorization', `Bearer ${authToken}`);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.tasks).toHaveLength(2);
+            expect(res.body).toHaveProperty('pagination');
+        });
+
+        it('should filter tasks by status', async () => {
+            const res = await request(app)
+                .get('/api/tasks')
+                .query({ status: 'Completed' })
+                .set('Authorization', `Bearer ${authToken}`);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.tasks).toHaveLength(1);
+            expect(res.body.tasks[0].status).toBe('Completed');
+        });
+
+        it('should filter tasks by priority', async () => {
+            const res = await request(app)
+                .get('/api/tasks')
+                .query({ priority: 'High' })
+                .set('Authorization', `Bearer ${authToken}`);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.tasks[0].priority).toBe('High');
+        });
+
+        it('should sort tasks', async () => {
+            const res = await request(app)
+                .get('/api/tasks')
+                .query({ sortBy: 'priority', sortOrder: 'desc' })
+                .set('Authorization', `Bearer ${authToken}`);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.tasks[0].priority).toBe('High');
+        });
+
+        it('should paginate results', async () => {
+            const res = await request(app)
+                .get('/api/tasks')
+                .query({ page: 1, limit: 1 })
+                .set('Authorization', `Bearer ${authToken}`);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.tasks).toHaveLength(1);
+            expect(res.body.pagination.total).toBe(2);
+        });
+    });
+
+    describe('PUT /api/tasks/:id', () => {
+        let taskId;
+
+        beforeEach(async () => {
+            const task = await Task.create({
                 title: 'Test Task',
                 description: 'Test Description',
                 priority: 'High',
-                dueDate: new Date()
+                status: 'To Do',
+                dueDate: new Date(),
+                creator: userId
             });
+            taskId = task._id;
+        });
 
-        expect(res.statusCode).toBe(201);
-        expect(res.body.title).toBe('Test Task');
+        it('should update task', async () => {
+            const res = await request(app)
+                .put(`/api/tasks/${taskId}`)
+                .set('Authorization', `Bearer ${authToken}`)
+                .send({
+                    title: 'Updated Task',
+                    status: 'Completed'
+                });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.title).toBe('Updated Task');
+            expect(res.body.status).toBe('Completed');
+        });
+
+        it('should not update task without authentication', async () => {
+            const res = await request(app)
+                .put(`/api/tasks/${taskId}`)
+                .send({
+                    title: 'Updated Task'
+                });
+
+            expect(res.statusCode).toBe(401);
+        });
+
+        it('should not update non-existent task', async () => {
+            const res = await request(app)
+                .put(`/api/tasks/${new mongoose.Types.ObjectId()}`)
+                .set('Authorization', `Bearer ${authToken}`)
+                .send({
+                    title: 'Updated Task'
+                });
+
+            expect(res.statusCode).toBe(404);
+        });
     });
 
-    it('should get all tasks for user', async () => {
-        // Create a task first
-        await request(app)
-            .post('/api/tasks')
-            .set('Authorization', `Bearer ${token}`)
-            .send({
+    describe('DELETE /api/tasks/:id', () => {
+        let taskId;
+
+        beforeEach(async () => {
+            const task = await Task.create({
                 title: 'Test Task',
                 description: 'Test Description',
                 priority: 'High',
-                dueDate: new Date()
+                status: 'To Do',
+                dueDate: new Date(),
+                creator: userId
+            });
+            taskId = task._id;
+        });
+
+        it('should delete task', async () => {
+            const res = await request(app)
+                .delete(`/api/tasks/${taskId}`)
+                .set('Authorization', `Bearer ${authToken}`);
+
+            expect(res.statusCode).toBe(200);
+            
+            const deletedTask = await Task.findById(taskId);
+            expect(deletedTask).toBeNull();
+        });
+
+        it('should not delete task without authentication', async () => {
+            const res = await request(app)
+                .delete(`/api/tasks/${taskId}`);
+
+            expect(res.statusCode).toBe(401);
+        });
+
+        it('should not delete non-existent task', async () => {
+            const res = await request(app)
+                .delete(`/api/tasks/${new mongoose.Types.ObjectId()}`)
+                .set('Authorization', `Bearer ${authToken}`);
+
+            expect(res.statusCode).toBe(404);
+        });
+    });
+
+    describe('GET /api/tasks/leaderboard', () => {
+        beforeEach(async () => {
+            // Create another user with different completion rates
+            const user2 = await User.create({
+                name: 'Test User 2',
+                email: 'test2@test.com',
+                password: 'password123',
+                completedTasks: 5,
+                totalTasks: 8
             });
 
-        const res = await request(app)
-            .get('/api/tasks')
-            .set('Authorization', `Bearer ${token}`);
+            await User.findByIdAndUpdate(userId, {
+                completedTasks: 3,
+                totalTasks: 10
+            });
+        });
 
-        expect(res.statusCode).toBe(200);
-        expect(Array.isArray(res.body)).toBeTruthy();
-        expect(res.body.length).toBe(1);
+        it('should get leaderboard', async () => {
+            const res = await request(app)
+                .get('/api/tasks/leaderboard')
+                .set('Authorization', `Bearer ${authToken}`);
+
+            expect(res.statusCode).toBe(200);
+            expect(Array.isArray(res.body)).toBeTruthy();
+            expect(res.body).toHaveLength(2);
+            expect(res.body[0].completedTasks).toBe(5); // User with more completed tasks should be first
+        });
+
+        it('should require authentication', async () => {
+            const res = await request(app)
+                .get('/api/tasks/leaderboard');
+
+            expect(res.statusCode).toBe(401);
+        });
     });
 });
