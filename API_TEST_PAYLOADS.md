@@ -18,11 +18,14 @@ Content-Type: application/json
 
 Response (201 Created):
 {
-    "_id": "user_id",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "role": "user",
-    "token": "jwt_token"
+    "success": true,
+    "message": "🎉 Welcome aboard! Your account has been created successfully!",
+    "data": {
+        "_id": "user_id",
+        "name": "John Doe",
+        "email": "john@example.com",
+        "role": "user"
+    }
 }
 ```
 
@@ -38,10 +41,14 @@ Content-Type: application/json
 
 Response (200 OK):
 {
-    "_id": "user_id",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "token": "jwt_token"
+    "success": true,
+    "message": "👋 Welcome back, John! Ready to be productive?",
+    "data": {
+        "_id": "user_id",
+        "name": "John Doe",
+        "email": "john@example.com",
+        "token": "jwt_token"
+    }
 }
 ```
 
@@ -64,21 +71,25 @@ Form Data:
 
 Response (201 Created):
 {
-    "_id": "task_id",
-    "title": "Complete Project Proposal",
-    "description": "Write and review Q2 project proposal",
-    "priority": "High",
-    "status": "To Do",
-    "dueDate": "2024-04-15",
-    "creator": {
-        "_id": "user_id",
-        "name": "John Doe"
-    },
-    "assignedTo": {
-        "_id": "user_id",
-        "name": "Jane Smith"
-    },
-    "imageUrl": "https://cloudinary.com/..."
+    "success": true,
+    "message": "🚀 Task created successfully! Let's get things done!",
+    "data": {
+        "_id": "task_id",
+        "title": "Complete Project Proposal",
+        "description": "Write and review Q2 project proposal",
+        "priority": "High",
+        "status": "To Do",
+        "dueDate": "2024-04-15",
+        "creator": {
+            "_id": "user_id",
+            "name": "John Doe"
+        },
+        "assignedTo": {
+            "_id": "user_id",
+            "name": "Jane Smith"
+        },
+        "imageUrl": "https://cloudinary.com/..."
+    }
 }
 ```
 
@@ -100,28 +111,32 @@ Query Parameters:
 
 Response (200 OK):
 {
-    "tasks": [
-        {
-            "_id": "task_id",
-            "title": "Complete Project Proposal",
-            "description": "Write and review Q2 project proposal",
-            "priority": "High",
-            "status": "In Progress",
-            "dueDate": "2024-04-15",
-            "creator": {
-                "_id": "user_id",
-                "name": "John Doe"
-            },
-            "assignedTo": {
-                "_id": "user_id",
-                "name": "Jane Smith"
+    "success": true,
+    "message": "📋 Here are your tasks!",
+    "data": {
+        "tasks": [
+            {
+                "_id": "task_id",
+                "title": "Complete Project Proposal",
+                "description": "Write and review Q2 project proposal",
+                "priority": "High",
+                "status": "In Progress",
+                "dueDate": "2024-04-15",
+                "creator": {
+                    "_id": "user_id",
+                    "name": "John Doe"
+                },
+                "assignedTo": {
+                    "_id": "user_id",
+                    "name": "Jane Smith"
+                }
             }
+        ],
+        "pagination": {
+            "total": 45,
+            "page": 1,
+            "pages": 5
         }
-    ],
-    "pagination": {
-        "total": 45,
-        "page": 1,
-        "pages": 5
     }
 }
 ```
@@ -143,12 +158,16 @@ Form Data:
 
 Response (200 OK):
 {
-    "_id": "task_id",
-    "title": "Updated Project Proposal",
-    "status": "Completed",
-    "priority": "Medium",
-    "imageUrl": "https://cloudinary.com/..."
-    // ... other fields
+    "success": true,
+    "message": "📝 Task updated successfully!",
+    "data": {
+        "_id": "task_id",
+        "title": "Updated Project Proposal",
+        "status": "Completed",
+        "priority": "Medium",
+        "imageUrl": "https://cloudinary.com/..."
+        // ... other fields
+    }
 }
 ```
 
@@ -159,7 +178,8 @@ Authorization: Bearer <token>
 
 Response (200 OK):
 {
-    "message": "Task removed successfully"
+    "success": true,
+    "message": "🚮 Task removed successfully!"
 }
 ```
 
@@ -176,19 +196,23 @@ Query Parameters:
 
 Response (200 OK):
 {
-    "tasks": [
-        {
-            "_id": "task_id",
-            "title": "Task Title",
-            "status": "In Progress",
-            "priority": "High",
-            // ... other task fields
+    "success": true,
+    "message": "📋 Here are your assigned tasks!",
+    "data": {
+        "tasks": [
+            {
+                "_id": "task_id",
+                "title": "Task Title",
+                "status": "In Progress",
+                "priority": "High",
+                // ... other task fields
+            }
+        ],
+        "pagination": {
+            "total": 25,
+            "page": 1,
+            "pages": 3
         }
-    ],
-    "pagination": {
-        "total": 25,
-        "page": 1,
-        "pages": 3
     }
 }
 ```
@@ -199,18 +223,22 @@ GET /api/tasks/notifications
 Authorization: Bearer <token>
 
 Response (200 OK):
-[
-    {
-        "_id": "notification_id",
-        "taskId": {
-            "_id": "task_id",
-            "title": "Task Title"
-        },
-        "type": "TASK_ASSIGNED",
-        "read": false,
-        "createdAt": "2024-04-02T10:00:00.000Z"
-    }
-]
+{
+    "success": true,
+    "message": "📣 Here are your task notifications!",
+    "data": [
+        {
+            "_id": "notification_id",
+            "taskId": {
+                "_id": "task_id",
+                "title": "Task Title"
+            },
+            "type": "TASK_ASSIGNED",
+            "read": false,
+            "createdAt": "2024-04-02T10:00:00.000Z"
+        }
+    ]
+}
 ```
 
 ### Get User Stats
@@ -220,11 +248,15 @@ Authorization: Bearer <token>
 
 Response (200 OK):
 {
-    "totalCreated": 45,
-    "completedCreated": 30,
-    "totalAssigned": 20,
-    "completedAssigned": 15,
-    "completionRate": 66.67
+    "success": true,
+    "message": "📊 Here are your stats!",
+    "data": {
+        "totalCreated": 45,
+        "completedCreated": 30,
+        "totalAssigned": 20,
+        "completedAssigned": 15,
+        "completionRate": 66.67
+    }
 }
 ```
 
@@ -234,22 +266,26 @@ GET /api/tasks/leaderboard
 Authorization: Bearer <token>
 
 Response (200 OK):
-[
-    {
-        "_id": "user_id",
-        "name": "Jane Smith",
-        "completedTasks": 25,
-        "totalTasks": 30,
-        "completionRate": 83.33
-    },
-    {
-        "_id": "user_id",
-        "name": "John Doe",
-        "completedTasks": 20,
-        "totalTasks": 28,
-        "completionRate": 71.43
-    }
-]
+{
+    "success": true,
+    "message": "🏆 Here's the leaderboard!",
+    "data": [
+        {
+            "_id": "user_id",
+            "name": "Jane Smith",
+            "completedTasks": 25,
+            "totalTasks": 30,
+            "completionRate": 83.33
+        },
+        {
+            "_id": "user_id",
+            "name": "John Doe",
+            "completedTasks": 20,
+            "totalTasks": 28,
+            "completionRate": 71.43
+        }
+    ]
+}
 ```
 
 ## Admin-Specific Operations
@@ -268,11 +304,14 @@ Content-Type: application/json
 
 Response (201 Created):
 {
-    "_id": "user_id",
-    "name": "Admin User",
-    "email": "admin@example.com",
-    "role": "admin",
-    "token": "jwt_token"
+    "success": true,
+    "message": "🎉 Welcome aboard, Admin! Your super-powered account is ready!",
+    "data": {
+        "_id": "user_id",
+        "name": "Admin User",
+        "email": "admin@example.com",
+        "role": "admin"
+    }
 }
 ```
 
@@ -283,28 +322,32 @@ Authorization: Bearer <admin_token>
 
 Response (200 OK):
 {
-    "tasks": [
-        {
-            "_id": "task_id",
-            "title": "Task Title",
-            "description": "Task Description",
-            "status": "In Progress",
-            "priority": "High",
-            "creator": {
-                "_id": "user_id",
-                "name": "John Doe"
-            },
-            "assignedTo": {
-                "_id": "user_id",
-                "name": "Jane Smith"
+    "success": true,
+    "message": "📋 Here's the complete task list, boss!",
+    "data": {
+        "tasks": [
+            {
+                "_id": "task_id",
+                "title": "Task Title",
+                "description": "Task Description",
+                "status": "In Progress",
+                "priority": "High",
+                "creator": {
+                    "_id": "user_id",
+                    "name": "John Doe"
+                },
+                "assignedTo": {
+                    "_id": "user_id",
+                    "name": "Jane Smith"
+                }
             }
+            // ... more tasks
+        ],
+        "pagination": {
+            "total": 100,
+            "page": 1,
+            "pages": 10
         }
-        // ... more tasks
-    ],
-    "pagination": {
-        "total": 100,
-        "page": 1,
-        "pages": 10
     }
 }
 ```
@@ -322,13 +365,17 @@ Form Data:
 
 Response (200 OK):
 {
-    "_id": "task_id",
-    "title": "Task Title",
-    "status": "Completed",
-    "priority": "High",
-    "assignedTo": {
-        "_id": "user_id",
-        "name": "Jane Smith"
+    "success": true,
+    "message": "📝 Task updated successfully!",
+    "data": {
+        "_id": "task_id",
+        "title": "Task Title",
+        "status": "Completed",
+        "priority": "High",
+        "assignedTo": {
+            "_id": "user_id",
+            "name": "Jane Smith"
+        }
     }
 }
 ```
@@ -340,7 +387,8 @@ Authorization: Bearer <admin_token>
 
 Response (200 OK):
 {
-    "message": "Task removed successfully"
+    "success": true,
+    "message": "🚮 Task removed successfully!"
 }
 ```
 
@@ -351,20 +399,24 @@ Authorization: Bearer <admin_token>
 
 Response (200 OK):
 {
-    "totalUsers": 50,
-    "totalTasks": 200,
-    "completedTasks": 150,
-    "systemCompletionRate": 75,
-    "userStats": [
-        {
-            "userId": "user_id",
-            "name": "John Doe",
-            "totalTasks": 30,
-            "completedTasks": 25,
-            "completionRate": 83.33
-        }
-        // ... more user stats
-    ]
+    "success": true,
+    "message": "📊 Here's your system overview, commander!",
+    "data": {
+        "totalUsers": 50,
+        "totalTasks": 200,
+        "completedTasks": 150,
+        "systemCompletionRate": 75,
+        "userStats": [
+            {
+                "userId": "user_id",
+                "name": "John Doe",
+                "totalTasks": 30,
+                "completedTasks": 25,
+                "completionRate": 83.33
+            }
+            // ... more user stats
+        ]
+    }
 }
 ```
 
@@ -525,7 +577,8 @@ curl -X GET http://localhost:5000/api/tasks/stats \
 ```http
 Status: 401 Unauthorized
 {
-    "message": "Not authorized to access this route"
+    "success": false,
+    "message": "🔒 Oops! You need to login first!"
 }
 ```
 
@@ -533,7 +586,8 @@ Status: 401 Unauthorized
 ```http
 Status: 400 Bad Request
 {
-    "message": "Please provide all required fields"
+    "success": false,
+    "message": "😅 Oops! Please provide all required fields"
 }
 ```
 
@@ -541,6 +595,7 @@ Status: 400 Bad Request
 ```http
 Status: 404 Not Found
 {
+    "success": false,
     "message": "Task not found"
 }
 ```
@@ -549,6 +604,7 @@ Status: 404 Not Found
 ```http
 Status: 403 Forbidden
 {
-    "message": "User role is not authorized to access this route"
+    "success": false,
+    "message": "🚫 Sorry, you don't have permission for this action"
 }
 ```
