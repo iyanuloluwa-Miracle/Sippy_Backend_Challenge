@@ -39,22 +39,28 @@ exports.getTasks = async (req, res) => {
 // Update a task
 exports.updateTask = async (req, res) => {
     try {
+        // The middleware already verified permissions and attached the task
         const task = await taskService.updateTask(
             req.params.id,
             req.body,
-            req.user._id,
-            req.user.role,
             req.file
         );
 
-        // Send notification if task is assigned to someone
+        // Send notifications if needed
         if (req.body.assignedTo) {
-            await taskService.createTaskNotification(task._id, req.body.assignedTo, 'TASK_ASSIGNED');
+            await taskService.createTaskNotification(
+                task._id, 
+                req.body.assignedTo, 
+                'TASK_ASSIGNED'
+            );
         }
 
-        // Send notification if status is changed to completed
         if (req.body.status === 'Completed') {
-            await taskService.createTaskNotification(task._id, task.creator, 'TASK_COMPLETED');
+            await taskService.createTaskNotification(
+                task._id, 
+                task.creator, 
+                'TASK_COMPLETED'
+            );
         }
 
         res.json({
@@ -65,9 +71,13 @@ exports.updateTask = async (req, res) => {
             data: task
         });
     } catch (error) {
-        res.status(400).json({
+        const statusCode = error.message.includes('not found') ? 404 : 400;
+        res.status(statusCode).json({
             success: false,
-            message: "😕 Couldn't update that task: " + error.message
+            message: error.message.includes('not found')
+                ? "🔍 Task not found"
+                : `😕 Couldn't update that task: ${error.message}`,
+            code: error.message.includes('not found') ? 'TASK_NOT_FOUND' : 'TASK_UPDATE_ERROR'
         });
     }
 };
@@ -75,19 +85,18 @@ exports.updateTask = async (req, res) => {
 // Delete a task
 exports.deleteTask = async (req, res) => {
     try {
-        await taskService.deleteTask(
-            req.params.id,
-            req.user._id,
-            req.user.role
-        );
+        await taskService.deleteTask(req.params.id); // Only need task ID now
         res.json({
             success: true,
             message: "🗑️ Task deleted successfully! Keeping things tidy!"
         });
     } catch (error) {
-        res.status(400).json({
+        const statusCode = error.message.includes('not found') ? 404 : 400;
+        res.status(statusCode).json({
             success: false,
-            message: "❌ Couldn't delete that task: " + error.message
+            message: error.message.includes('not found') 
+                ? "🔍 Task not found"
+                : `❌ Couldn't delete that task: ${error.message}`
         });
     }
 };

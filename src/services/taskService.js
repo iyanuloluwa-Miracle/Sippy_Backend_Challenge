@@ -100,21 +100,20 @@ class TaskService {
     }
   }
 
-  async updateTask(taskId, updateData, userId, userRole, file) {
+  async updateTask(taskId, updateData, file) {
     try {
       const task = await Task.findById(taskId);
       if (!task) throw new Error("Task not found");
-
-      // Check authorization
-      if (userRole !== "admin" && task.creator.toString() !== userId) {
-        throw new Error("Not authorized to update this task");
-      }
 
       // Handle image update
       if (file) {
         // Delete old image if exists
         if (task.imageUrl) {
-          await cloudinaryService.deleteImage(task.imageUrl);
+          try {
+            await cloudinaryService.deleteImage(task.imageUrl);
+          } catch (deleteError) {
+            console.error("Error deleting old image:", deleteError);
+          }
         }
         // Upload new image
         updateData.imageUrl = await cloudinaryService.uploadImage(file);
@@ -138,37 +137,39 @@ class TaskService {
     }
   }
 
-  async deleteTask(taskId, userId, userRole) {
+  async deleteTask(taskId) {  // Removed userId and userRole parameters
     try {
-      const task = await Task.findById(taskId);
-      if (!task) throw new Error("Task not found");
+        const task = await Task.findById(taskId);
+        if (!task) {
+            throw new Error('Task not found');
+        }
 
-      // Check authorization
-      if (userRole !== "admin" && task.creator.toString() !== userId) {
-        throw new Error("Not authorized to delete this task");
-      }
+        // Delete task image if exists
+        if (task.imageUrl) {
+            try {
+                await cloudinaryService.deleteImage(task.imageUrl);
+            } catch (deleteError) {
+                console.error('Error deleting old image:', deleteError);
+                // Continue with task deletion even if image deletion fails
+            }
+        }
 
-      // Delete task image if exists
-      if (task.imageUrl) {
-        await cloudinaryService.deleteImage(task.imageUrl);
-      }
+        // Delete the task
+        await Task.deleteOne({ _id: taskId });
 
-      // Use deleteOne instead of remove (which is deprecated)
-      await Task.deleteOne({ _id: taskId });
+        // Update user's task counts
+        const updateData = { $inc: { totalTasks: -1 } };
+        if (task.status === 'Completed') {
+            updateData.$inc.completedTasks = -1;
+        }
+        await User.findByIdAndUpdate(task.creator, updateData);
 
-      // Update user's task counts
-      const updateData = { $inc: { totalTasks: -1 } };
-      if (task.status === "Completed") {
-        updateData.$inc.completedTasks = -1;
-      }
-      await User.findByIdAndUpdate(task.creator, updateData);
-
-      return { message: "Task removed successfully" };
+        return { success: true, message: 'Task deleted successfully' };
     } catch (error) {
-      console.error("Delete task error:", error);
-      throw new Error(`Failed to delete task: ${error.message}`);
+        console.error('Delete task error:', error);
+        throw new Error(`Failed to delete task: ${error.message}`);
     }
-  }
+}
 
   async getLeaderboard() {
     try {
