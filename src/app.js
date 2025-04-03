@@ -5,6 +5,7 @@ const connectDB = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const path = require('path');
+const morgan = require('morgan');
 
 // Load env vars
 dotenv.config();
@@ -17,6 +18,13 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Add Morgan for logging
+app.use(morgan('dev')); // This shows concise colored output for development
+
+// For production, you can use:
+// app.use(morgan('combined')); // More verbose logging
+
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Routes
@@ -25,7 +33,10 @@ app.use('/api/tasks', taskRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {
+    console.error(err.stack);
+    
     res.status(err.status || 500).json({
+        success: false,
         message: err.message || 'Internal Server Error'
     });
 });

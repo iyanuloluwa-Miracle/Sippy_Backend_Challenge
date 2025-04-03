@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/auth');
-const upload = require('../middleware/upload');
+const { uploadToMemory, handleMulterError } = require('../middleware/upload');
 const {
     createTask,
     getTasks,
@@ -15,12 +15,14 @@ const {
 
 router.use(protect); // Protect all routes
 
+// Apply upload handling with error handling middleware
+router.post('/', uploadToMemory.single('image'), handleMulterError, createTask);
+router.put('/:id', uploadToMemory.single('image'), handleMulterError, updateTask);
+
 router.route('/')
-    .post(upload.single('image'), createTask)
     .get(getTasks);
 
 router.route('/:id')
-    .put(upload.single('image'), updateTask)
     .delete(deleteTask);
 
 router.get('/leaderboard', getLeaderboard);

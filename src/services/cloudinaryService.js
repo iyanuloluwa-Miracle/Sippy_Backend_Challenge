@@ -11,22 +11,58 @@ class CloudinaryService {
 
     async uploadImage(file) {
         try {
-            const result = await cloudinary.uploader.upload(file.path, {
-                folder: 'task-management',
-                use_filename: true
-            });
-            return result;
+            if (!file) {
+                return null;
+            }
+            
+            // If we have a file path (from multer disk storage)
+            if (file.path) {
+                const result = await cloudinary.uploader.upload(file.path, {
+                    folder: 'task-management',
+                    use_filename: true
+                });
+                return result.secure_url;
+            } 
+            // If we have a buffer (from multer memory storage)
+            else if (file.buffer) {
+                // Convert buffer to base64
+                const b64 = Buffer.from(file.buffer).toString('base64');
+                const dataURI = `data:${file.mimetype};base64,${b64}`;
+                
+                const result = await cloudinary.uploader.upload(dataURI, {
+                    folder: 'task-management',
+                    resource_type: 'auto'
+                });
+                return result.secure_url;
+            }
+            
+            throw new Error('Invalid file format');
         } catch (error) {
-            throw new Error('Error uploading image to Cloudinary');
+            console.error('Cloudinary upload error:', error);
+            throw new Error(`Error uploading image to Cloudinary: ${error.message}`);
         }
     }
 
     async deleteImage(imageUrl) {
         try {
-            const publicId = imageUrl.split('/').slice(-1)[0].split('.')[0];
-            await cloudinary.uploader.destroy(`task-management/${publicId}`);
+            if (!imageUrl) return;
+            
+            // Extract the public ID from the URL
+            // Format: https://res.cloudinary.com/cloud_name/image/upload/folder/public_id.extension
+            const splitUrl = imageUrl.split('/');
+            const filename = splitUrl[splitUrl.length - 1];
+            // Remove extension
+            const publicId = filename.substring(0, filename.lastIndexOf('.'));
+            
+            // Include folder in public ID
+            const folder = splitUrl[splitUrl.length - 2];
+            const fullPublicId = `${folder}/${publicId}`;
+            
+            const result = await cloudinary.uploader.destroy(fullPublicId);
+            return result;
         } catch (error) {
-            throw new Error('Error deleting image from Cloudinary');
+            console.error('Cloudinary delete error:', error);
+            throw new Error(`Error deleting image from Cloudinary: ${error.message}`);
         }
     }
 }

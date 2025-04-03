@@ -45,4 +45,16 @@ userSchema.methods.matchPassword = async function(enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
+// Add this method to your User schema
+userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
+    if (this.passwordChangedAt) {
+        const changedTimestamp = parseInt(
+            this.passwordChangedAt.getTime() / 1000, 
+            10
+        );
+        return JWTTimestamp < changedTimestamp;
+    }
+    return false;
+};
+
 module.exports = mongoose.model('User', userSchema);
