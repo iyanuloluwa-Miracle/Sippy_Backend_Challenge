@@ -6,9 +6,16 @@ const taskService = require('../services/taskService');
 exports.createTask = async (req, res) => {
     try {
         const task = await taskService.createTask(req.body, req.user._id, req.file);
-        res.status(201).json(task);
+        res.status(201).json({
+            success: true,
+            message: "🚀 Task created successfully! Let's get things done!",
+            data: task
+        });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(400).json({
+            success: false,
+            message: "😅 Oops! " + error.message
+        });
     }
 };
 
@@ -16,9 +23,16 @@ exports.createTask = async (req, res) => {
 exports.getTasks = async (req, res) => {
     try {
         const result = await taskService.getTasks(req.query, req.user);
-        res.json(result);
+        res.json({
+            success: true,
+            message: "📋 Here's your task list!",
+            data: result
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            success: false,
+            message: "🤖 System hiccup! " + error.message
+        });
     }
 };
 
@@ -43,23 +57,38 @@ exports.updateTask = async (req, res) => {
             await taskService.createTaskNotification(task._id, task.creator, 'TASK_COMPLETED');
         }
 
-        res.json(task);
+        res.json({
+            success: true,
+            message: req.body.status === 'Completed' 
+                ? "🎉 Amazing job completing the task!"
+                : "✏️ Task updated successfully!",
+            data: task
+        });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(400).json({
+            success: false,
+            message: "😕 Couldn't update that task: " + error.message
+        });
     }
 };
 
 // Delete a task
 exports.deleteTask = async (req, res) => {
     try {
-        const result = await taskService.deleteTask(
+        await taskService.deleteTask(
             req.params.id,
             req.user._id,
             req.user.role
         );
-        res.json(result);
+        res.json({
+            success: true,
+            message: "🗑️ Task deleted successfully! Keeping things tidy!"
+        });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(400).json({
+            success: false,
+            message: "❌ Couldn't delete that task: " + error.message
+        });
     }
 };
 
@@ -67,9 +96,16 @@ exports.deleteTask = async (req, res) => {
 exports.getLeaderboard = async (req, res) => {
     try {
         const leaderboard = await taskService.getLeaderboard();
-        res.json(leaderboard);
+        res.json({
+            success: true,
+            message: "🏆 Here's your productivity champions!",
+            data: leaderboard
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            success: false,
+            message: "📊 Couldn't fetch leaderboard: " + error.message
+        });
     }
 };
 
@@ -77,9 +113,16 @@ exports.getLeaderboard = async (req, res) => {
 exports.getAssignedTasks = async (req, res) => {
     try {
         const tasks = await taskService.getAssignedTasks(req.user._id, req.query);
-        res.json(tasks);
+        res.json({
+            success: true,
+            message: "📥 Here are your assigned tasks!",
+            data: tasks
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            success: false,
+            message: "📭 Couldn't fetch assigned tasks: " + error.message
+        });
     }
 };
 
@@ -87,9 +130,16 @@ exports.getAssignedTasks = async (req, res) => {
 exports.getTaskNotifications = async (req, res) => {
     try {
         const notifications = await taskService.getTaskNotifications(req.user._id);
-        res.json(notifications);
+        res.json({
+            success: true,
+            message: "🔔 Here's what's new!",
+            data: notifications
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            success: false,
+            message: "🔕 Couldn't fetch notifications: " + error.message
+        });
     }
 };
 
@@ -97,8 +147,28 @@ exports.getTaskNotifications = async (req, res) => {
 exports.getUserStats = async (req, res) => {
     try {
         const stats = await taskService.getUserStats(req.user._id);
-        res.json(stats);
+        const completionRate = Math.round(stats.completionRate);
+        let message = "📊 Here are your stats! ";
+        
+        if (completionRate >= 90) {
+            message += "🌟 You're crushing it!";
+        } else if (completionRate >= 70) {
+            message += "💪 Great progress!";
+        } else if (completionRate >= 50) {
+            message += "👍 Keep going!";
+        } else {
+            message += "🌱 You're just getting started!";
+        }
+
+        res.json({
+            success: true,
+            message,
+            data: stats
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            success: false,
+            message: "📉 Couldn't fetch stats: " + error.message
+        });
     }
 };
