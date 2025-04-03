@@ -21,7 +21,7 @@ const taskSchema = new mongoose.Schema({
     },
     dueDate: {
         type: Date,
-        required: true
+      
     },
     imageUrl: {
         type: String
