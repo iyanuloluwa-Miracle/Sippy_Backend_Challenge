@@ -14,7 +14,9 @@ exports.register = async (req, res) => {
         const user = await authService.registerUser(req.body);
         res.status(201).json({
             success: true,
-            message: "🎉 Welcome aboard! Your account has been created successfully!",
+            message: user.role === 'admin' 
+                ? "🎉 Welcome aboard, Admin! Your super-powered account is ready!"
+                : "🎉 Welcome aboard! Your account has been created successfully!",
             data: {
                 _id: user._id,
                 name: user.name,
@@ -33,21 +35,22 @@ exports.register = async (req, res) => {
 // Login user
 exports.login = async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const userData = await authService.login(email, password);
+        const { user, token } = await authService.loginUser(req.body);
         res.json({
             success: true,
-            message: `👋 Welcome back, ${userData.name}! Ready to be productive?`,
+            message: user.role === 'admin'
+                ? `👋 Welcome back, ${user.name}! Ready to manage the system?`
+                : `👋 Welcome back, ${user.name}! Ready to be productive?`,
             data: {
-                _id: userData._id,
-                name: userData.name,
-                email: userData.email,
-                role: userData.role,
-                token: generateToken(userData._id)
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                token
             }
         });
     } catch (error) {
-        res.status(401).json({
+        res.status(400).json({
             success: false,
             message: "🤔 Hmm... " + error.message
         });
