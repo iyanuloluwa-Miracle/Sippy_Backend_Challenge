@@ -1,4 +1,4 @@
-const taskService = require('../../services/taskService');
+const taskService = require('../../src/services/taskService');
 const Task = require('../../models/Task');
 const User = require('../../models/User');
 const { createTestUser } = require('../utils/testHelpers');
