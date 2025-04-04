@@ -5,8 +5,8 @@ Hey there! 👋 Welcome to the Task Management System - a super cool way to keep
 ---
 
 ## 📌 Quick Links
-- **API Documentation:** [View in Postman](#)
-- **Base URL:** `http://your-api.com`
+- **API Documentation:** [View in Postman](https://documenter.getpostman.com/view/29992846/2sB2cSiQ4q)
+- **Base URL:** `https://sippy-task-management-challenge.onrender.com`
 
 ---
 
