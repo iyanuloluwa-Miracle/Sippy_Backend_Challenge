@@ -2,6 +2,13 @@
 
 A user-friendly task management system that helps teams organize and track their work efficiently.
 
+
+## Quick Links
+
+- **API Documentation**: [View in Postman](https://documenter.getpostman.com/view/29992846/2sB2cSiQ4q)
+- **Base URL**: `#`
+
+
 ## 📚 Table of Contents
 - [For Users (Non-Technical)](#for-users-non-technical)
 - [For Developers (Technical)](#for-developers-technical)
