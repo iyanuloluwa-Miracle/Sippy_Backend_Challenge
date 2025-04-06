@@ -1,5 +1,5 @@
-const Task = require("../models/Task");
-const User = require("../models/User");
+const Task = require('../../src/models/Task');
+const User = require("../../src/models/User");
 const Notification = require("../models/Notification");
 const cloudinaryService = require("./cloudinaryService");
 

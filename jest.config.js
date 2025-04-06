@@ -6,7 +6,8 @@ module.exports = {
   rootDir: '.',
   testRegex: '.*\\.(spec|test)\\.js$',
   transform: {
-    '^.+\\.(t|j)s$': 'ts-jest',
+    '^.+\\.js$': 'babel-jest', // Add this for JavaScript files
+    '^.+\\.ts$': 'ts-jest',    // Keep this for TypeScript files
   },
   collectCoverageFrom: [
     '**/*.{js,ts}',

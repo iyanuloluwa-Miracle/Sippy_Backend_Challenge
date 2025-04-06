@@ -1,7 +1,9 @@
+// In your auth.test.js or setup.js
+require('dotenv').config({ path: '.env.test' });
 const jwt = require('jsonwebtoken');
 const { protect, authorize } = require('../../../src/middleware/auth');
 const User = require('../../../src/models/User');
-const { createTestUser } = require('../../utils/testHelpers');
+const { createTestUser } = require('../utils/testHelpers'); // Update path
 
 describe('Auth Middleware', () => {
   let mockRequest;
