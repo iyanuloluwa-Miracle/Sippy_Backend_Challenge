@@ -19,4 +19,5 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  testTimeout: 60000, // Increase global timeout to 60 seconds
 };

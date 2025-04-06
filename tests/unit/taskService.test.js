@@ -7,6 +7,11 @@ describe("Task Service", () => {
   let testUser;
 
   beforeEach(async () => {
+    // Clean up the database before each test
+    await Task.deleteMany({});
+    await User.deleteMany({});
+
+    // Create a fresh test user
     testUser = await createTestUser();
   });
 
@@ -111,14 +116,13 @@ describe("Task Service", () => {
   });
 
   describe("deleteTask", () => {
-    // In taskService.test.js
     it("should delete a task", async () => {
       // First create a task
-      const task = await Task.create({
+      const task = await taskService.createTask({
         title: "Task to Delete",
         description: "Desc",
-        creator: testUser._id,
-      });
+        status: "To Do"
+      }, testUser._id);
 
       // Verify initial count is 1
       let user = await User.findById(testUser._id);
@@ -136,28 +140,30 @@ describe("Task Service", () => {
   describe("getLeaderboard", () => {
     it("should return leaderboard data", async () => {
       // Create test users with different completion rates
-      await User.create([
-        {
-          name: "User 1",
-          email: "user1@example.com",
-          password: "password",
-          completedTasks: 5,
-          totalTasks: 10,
-        },
-        {
-          name: "User 2",
-          email: "user2@example.com",
-          password: "password",
-          completedTasks: 8,
-          totalTasks: 10,
-        },
-      ]);
+      const user1 = await User.create({
+        name: "User 1",
+        email: "user1@example.com",
+        password: "password",
+        completedTasks: 5,
+        totalTasks: 10,
+      });
+
+      const user2 = await User.create({
+        name: "User 2",
+        email: "user2@example.com",
+        password: "password",
+        completedTasks: 8,
+        totalTasks: 10,
+      });
 
       const leaderboard = await taskService.getLeaderboard();
-      expect(leaderboard.length).toBe(2);
-      expect(leaderboard[0].completionRate).toBeGreaterThanOrEqual(
-        leaderboard[1].completionRate
-      );
+
+      // We expect 3 users (testUser + 2 new users)
+      expect(leaderboard.length).toBe(3);
+
+      // Verify the sorting
+      const sortedRates = leaderboard.map(user => user.completionRate);
+      expect(sortedRates).toEqual([...sortedRates].sort((a, b) => b - a));
     });
   });
 });

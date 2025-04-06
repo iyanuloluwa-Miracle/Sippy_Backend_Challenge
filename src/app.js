@@ -10,20 +10,17 @@ const morgan = require('morgan');
 // Load env vars
 dotenv.config();
 
-// Connect to database
-connectDB();
-
+// Create Express app
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Add Morgan for logging
-app.use(morgan('dev')); // This shows concise colored output for development
-
-// For production, you can use:
-// app.use(morgan('combined')); // More verbose logging
+// Add Morgan for logging only in development
+if (process.env.NODE_ENV !== 'test') {
+    app.use(morgan('dev'));
+}
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
@@ -34,15 +31,22 @@ app.use('/api/tasks', taskRoutes);
 // Error handler
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    
+
     res.status(err.status || 500).json({
         success: false,
         message: err.message || 'Internal Server Error'
     });
 });
 
-const PORT = process.env.PORT || 5000;
+// Only connect to database and start server if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+    // Connect to database
+    connectDB();
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;

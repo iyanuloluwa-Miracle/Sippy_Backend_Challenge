@@ -1,8 +1,6 @@
-# 🚀 Task Management System: A Fun Way to Get Things Done!
+# 🚀 Task Management System
 
-Hey there! 👋 Welcome to the Task Management System - a super cool way to keep track of tasks without losing your mind! Whether you're a solo hustler or part of a dream team, we've got you covered. 
-
----
+A robust and secure task management API built with Node.js, Express, and MongoDB.
 
 ## 📌 Quick Links
 
@@ -10,55 +8,39 @@ Hey there! 👋 Welcome to the Task Management System - a super cool way to keep
 - 🌐 **Base URL:** [`https://sippy-task-management-challenge.onrender.com`](https://sippy-task-management-challenge.onrender.com)
 
 
----
+## 📋 Table of Contents
+- [Features](#features)
+- [Setup Instructions](#setup-instructions)
+- [API Documentation](#api-documentation)
+- [Design Decisions](#design-decisions)
+- [Testing](#testing)
+- [Security Measures](#security-measures)
+- [Database Design](#database-design)
+- [Performance Optimizations](#performance-optimizations)
 
-## 📚 Table of Contents
-- [For Users (Non-Technical)](#for-users-non-technical)
-- [For Developers (Technical)](#for-developers-technical)
-- [API Examples](#api-examples)
-- [Technical Details](#technical-details)
+## ✨ Features
+- 🔐 JWT Authentication
+- 👥 Role-based access control
+- 📝 CRUD operations for tasks
+- 🔄 Task status management
+- 📊 Task priority levels
+- 🖼️ Image upload support
+- 📈 Leaderboard system
+- 🔍 Advanced search and filtering
+- 📱 Responsive API design
 
----
+## 🛠 Setup Instructions
 
-## 👥 For Users (Non-Technical)
-### 🎯 What Does This App Do?
-Think of this as your digital task notebook but with superpowers! You can:
+### Prerequisites
+- Node.js (v14 or higher)
+- MongoDB (v4.4 or higher)
+- npm or yarn
 
-✅ Create and manage tasks 📝  
-👥 Assign tasks to team members 📤  
-📊 Track task status and priority 🔄  
-🖼️ Upload images for visual references 📷  
-🏆 Check out the leaderboard (who's bossing the tasks?) 🏅  
-🔍 Search and filter tasks like a pro 🔎  
-
-### 🏷️ User Roles
-#### Regular Users Can:
-- Create, update, and delete their own tasks
-- Assign tasks to teammates
-- Track progress and get notified
-- Upload images to tasks
-- View the leaderboard (flex on your teammates!)
-
-#### Administrators Can:
-- Do everything users can
-- Manage all tasks system-wide
-- Access productivity reports (who’s slacking?)
-
-### 🛠 Getting Started
-1. **Register** for an account ✍️  
-2. **Log in** and get your personal dashboard 🔑  
-3. **Start creating and managing tasks** ✅  
-4. **Use filters** to find tasks easily 🕵️  
-5. **Check the leaderboard** to see the top performers 🏆  
-
----
-
-## 🛠 For Developers (Technical)
-### ⚡ Quick Start
+### Installation
 ```bash
-# Clone the repo
-git clone https://github.com/your-repo/task-management-api.git
-cd task-management-api
+# Clone the repository
+git clone https://github.com/your-username/task-management-system.git
+cd task-management-system
 
 # Install dependencies
 npm install
@@ -70,26 +52,26 @@ cp .env.example .env
 npm start
 ```
 
-### 🔧 Configuration
-Create a `.env` file with the following values:
+### Environment Variables
+Create a `.env` file with the following variables:
 ```env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/task-management
-JWT_SECRET=super_secret_key
+JWT_SECRET=your_jwt_secret
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 ```
 
----
+## 📚 API Documentation
 
-## 🌐 API Examples
-### 🔐 Authentication
-#### Register a New User
+### Authentication Endpoints
+
+#### Register User
 ```http
 POST /api/auth/register
-```
-```json
+Content-Type: application/json
+
 {
     "name": "John Doe",
     "email": "john@example.com",
@@ -101,20 +83,22 @@ POST /api/auth/register
 #### Login
 ```http
 POST /api/auth/login
-```
-```json
+Content-Type: application/json
+
 {
     "email": "john@example.com",
     "password": "securePassword123"
 }
 ```
 
-### 📋 Task Management
-#### Create a Task
+### Task Endpoints
+
+#### Create Task
 ```http
 POST /api/tasks
-```
-```json
+Authorization: Bearer <token>
+Content-Type: application/json
+
 {
     "title": "Build a Robot",
     "description": "Create an awesome robot helper",
@@ -125,110 +109,139 @@ POST /api/tasks
 }
 ```
 
-#### Get Tasks with Filters
+#### Get Tasks
 ```http
 GET /api/tasks?status=InProgress&priority=High&search=robot&page=1&limit=10
+Authorization: Bearer <token>
 ```
 
-#### Update a Task
+#### Update Task
 ```http
 PUT /api/tasks/:taskId
-```
-```json
+Authorization: Bearer <token>
+Content-Type: application/json
+
 {
     "status": "Completed",
     "priority": "Medium"
 }
 ```
 
-#### Delete a Task
+#### Delete Task
 ```http
 DELETE /api/tasks/:taskId
-```
-```json
-{
-    "message": "Task removed successfully"
-}
+Authorization: Bearer <token>
 ```
 
 #### Get Leaderboard
 ```http
 GET /api/tasks/leaderboard
-```
-```json
-[
-    { "_id": "user1", "name": "Jane Smith", "completedTasks": 25, "totalTasks": 30 },
-    { "_id": "user2", "name": "John Doe", "completedTasks": 20, "totalTasks": 28 }
-]
+Authorization: Bearer <token>
 ```
 
----
+## 🎯 Design Decisions
 
-## 🏗 Technical Details
-### 🏛 Architecture Overview
-```
-Client Request → JWT Auth → Route Handler → Service Layer → Database
-                                    ↳ Cloudinary (for images)
-```
+### Architecture
+- **MVC Pattern**: Separated concerns into Models, Controllers, and Services
+- **Middleware-based Authentication**: JWT-based auth with role-based access control
+- **Service Layer**: Business logic isolated in service layer for better maintainability
+- **Error Handling**: Centralized error handling with custom error classes
 
-### 🗂 Database Schemas
-#### 👤 User Schema
-```json
-{
-    "name": "John Doe",
-    "email": "john@example.com",
-    "password": "hashedPassword",
-    "role": "user",
-    "completedTasks": 5,
-    "totalTasks": 10
-}
-```
-#### 📝 Task Schema
-```json
-{
-    "title": "Build a Robot",
-    "description": "Create an awesome robot helper",
-    "status": "In Progress",
-    "priority": "High",
-    "dueDate": "2024-04-15",
-    "creator": "user_id",
-    "assignedTo": "user_id",
-    "imageUrl": "robot.jpg"
-}
-```
-#### 🔔 Notification Schema
-```json
-{
-    "userId": "user_id",
-    "taskId": "task_id",
-    "type": "TASK_ASSIGNED",
-    "read": false
-}
+### Database Design
+- **MongoDB**: Chosen for flexibility and scalability
+- **Schema Design**: Optimized for task management with proper indexing
+- **Relationships**: Maintained through references while keeping flexibility
+
+### API Design
+- **RESTful Principles**: Followed REST conventions for intuitive API design
+- **Pagination**: Implemented for efficient data retrieval
+- **Filtering**: Advanced search and filter capabilities
+- **Response Format**: Consistent JSON response structure
+
+## 🧪 Testing
+
+### Test Coverage
+```bash
+# Run all tests
+npm test
+
+# Run unit tests only
+npm run test:unit
+
+# Run integration tests only
+npm run test:int
+
+# Generate coverage report
+npm run test:coverage
 ```
 
----
+### Test Structure
+- **Unit Tests**: Testing individual components in isolation
+- **Integration Tests**: Testing API endpoints and database interactions
+- **Mocking**: External services mocked for reliable testing
 
 ## 🔒 Security Measures
-✅ **JWT Authentication** - Every request is verified 🔑  
-✅ **Password Hashing** - Your password stays secret 🤫  
-✅ **Role-Based Access** - Admins have extra superpowers 🦸  
-✅ **Secure File Uploads** - No dodgy uploads here! 🚫  
 
----
+### Authentication & Authorization
+- JWT-based authentication
+- Password hashing with bcrypt
+- Role-based access control
+- Token expiration and refresh mechanism
 
-## 🧪 Testing Strategy
-We believe in "Test First, Debug Less!" 🧑‍🔬
+### Data Protection
+- Input validation and sanitization
+- XSS protection
+- CORS configuration
+- Rate limiting
 
-```bash
-npm test            # Run all tests
-npm run test:unit   # Only unit tests
-npm run test:int    # Only integration tests
-```
-✅ Unit tests for authentication, tasks, and middleware  
-✅ Integration tests for database interactions and API responses  
-✅ Mocked external services for reliability  
+### File Upload Security
+- File type validation
+- Size restrictions
+- Secure cloud storage
+- Virus scanning (optional)
+
+## 💾 Database Design
+
+### Collections
+1. **Users**
+   - Basic user information
+   - Authentication details
+   - Task statistics
+
+2. **Tasks**
+   - Task details
+   - Status and priority
+   - Creator and assignee references
+   - Image references
+
+3. **Notifications**
+   - User notifications
+   - Task-related alerts
+   - Read status tracking
+
+### Indexing Strategy
+- Compound indexes for frequent queries
+- Text indexes for search functionality
+- Unique indexes for email and username
+
+## ⚡ Performance Optimizations
+
+### Database
+- Efficient indexing
+- Query optimization
+- Aggregation pipeline optimization
+
+### API
+- Response caching
+- Pagination implementation
+- Selective field projection
+
+### Image Handling
+- Cloudinary integration
+- Image optimization
+- Lazy loading support
 
 
-**🎉 Ready to Get Started?**
-Go ahead, create some tasks, assign them, and watch the productivity soar! 🚀
 
+## 📝 License
+This project is licensed under the MIT License - see the LICENSE file for details.

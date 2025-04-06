@@ -1,16 +1,37 @@
 const request = require('supertest');
+const mongoose = require('mongoose');
 const app = require('../../src/app');
 const Task = require('../../src/models/Task');
 const User = require('../../src/models/User');
 const { createTestUser, getAuthToken } = require('../utils/testHelpers');
+const connectDB = require('../../src/config/database');
 
 describe('Task Routes', () => {
   let authToken;
   let testUser;
+  let server;
+
+  beforeAll(async () => {
+    // Connect to test database
+    await connectDB();
+    // Create server
+    server = app.listen(0);
+  });
+
+  afterAll(async () => {
+    // Close server and database connection
+    await mongoose.disconnect();
+    await server.close();
+  });
 
   beforeEach(async () => {
+    // Clean up the database before each test
+    await Task.deleteMany({});
+    await User.deleteMany({});
+
+    // Create a fresh test user
     testUser = await createTestUser();
-    authToken = getAuthToken(testUser._id);
+    authToken = getAuthToken(testUser);
   });
 
   describe('POST /api/tasks', () => {
@@ -20,7 +41,7 @@ describe('Task Routes', () => {
         description: 'Integration Test Description',
       };
 
-      const response = await request(app)
+      const response = await request(server) // Use server instead of app
         .post('/api/tasks')
         .set('Authorization', `Bearer ${authToken}`)
         .send(taskData)
@@ -40,7 +61,7 @@ describe('Task Routes', () => {
         description: 'Should fail',
       };
 
-      await request(app)
+      await request(server) // Use server instead of app
         .post('/api/tasks')
         .send(taskData)
         .expect(401);
@@ -63,7 +84,7 @@ describe('Task Routes', () => {
         },
       ]);
 
-      const response = await request(app)
+      const response = await request(server) // Use server instead of app
         .get('/api/tasks')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -87,7 +108,7 @@ describe('Task Routes', () => {
         status: 'In Progress',
       };
 
-      const response = await request(app)
+      const response = await request(server) // Use server instead of app
         .put(`/api/tasks/${task._id}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send(updateData)
@@ -110,7 +131,7 @@ describe('Task Routes', () => {
         creator: testUser._id,
       });
 
-      const response = await request(app)
+      const response = await request(server) // Use server instead of app
         .delete(`/api/tasks/${task._id}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);

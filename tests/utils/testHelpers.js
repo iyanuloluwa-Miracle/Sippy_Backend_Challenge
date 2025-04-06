@@ -1,17 +1,27 @@
 const jwt = require('jsonwebtoken');
 const User = require('../../src/models/User');
 
-exports.createTestUser = async (role = 'user') => {
-  return await User.create({
+const createTestUser = async (userData = {}) => {
+  const defaultUser = {
     name: 'Test User',
     email: `test${Date.now()}@example.com`,
     password: 'password123',
-    role,
-  });
+    ...userData
+  };
+
+  const user = await User.create(defaultUser);
+  return user;
 };
 
-exports.getAuthToken = (userId, role = 'user') => {
-  return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
-  });
+const getAuthToken = (user) => {
+  return jwt.sign(
+    { id: user._id },
+    process.env.JWT_SECRET,
+    { expiresIn: '30d' }
+  );
+};
+
+module.exports = {
+  createTestUser,
+  getAuthToken
 };

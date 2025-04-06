@@ -3,7 +3,7 @@ require('dotenv').config({ path: '.env.test' });
 const jwt = require('jsonwebtoken');
 const { protect, authorize } = require('../../../src/middleware/auth');
 const User = require('../../../src/models/User');
-const { createTestUser } = require('../utils/testHelpers'); // Update path
+const { createTestUser } = require('../../utils/testHelpers'); // Fixed path
 
 describe('Auth Middleware', () => {
   let mockRequest;
@@ -61,7 +61,7 @@ describe('Auth Middleware', () => {
 
   describe('authorize', () => {
     it('should call next() if user has required role', async () => {
-      const testUser = await createTestUser('admin');
+      const testUser = await createTestUser({ role: 'admin' });
       mockRequest.user = testUser;
 
       const middleware = authorize('admin');
@@ -71,7 +71,7 @@ describe('Auth Middleware', () => {
     });
 
     it('should return 403 if user does not have required role', async () => {
-      const testUser = await createTestUser('user');
+      const testUser = await createTestUser({ role: 'user' });
       mockRequest.user = testUser;
 
       const middleware = authorize('admin');

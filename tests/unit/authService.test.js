@@ -1,7 +1,6 @@
 const authService = require('../../src/services/authService');
 const User = require('../../src/models/User');
-const { getAuthToken } = require('../utils/testHelpers');
-const { createTestUser } = require('../../src/utils/testHelpers');
+const { createTestUser, getAuthToken } = require('../utils/testHelpers');
 
 describe('Auth Service', () => {
   describe('registerUser', () => {
